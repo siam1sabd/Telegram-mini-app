@@ -1,0 +1,304 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Material 3 Expressive Design System for Telegram Mini App
+   - M3 color roles (light + dark)
+   - Shape scale (M3 expressive varied shapes)
+   - Type scale (Roboto-flex inspired)
+   - Motion tokens (spring physics)
+   ============================================================ */
+
+@theme {
+  /* M3 Expressive color palette — warm dark plum primary + lime accent */
+  --color-m3-primary: #D9C2FF;
+  --color-m3-on-primary: #1B0B45;
+  --color-m3-primary-container: #4B2A8E;
+  --color-m3-on-primary-container: #ECDCFF;
+
+  --color-m3-secondary: #CDC2DC;
+  --color-m3-on-secondary: #322E40;
+  --color-m3-secondary-container: #494457;
+  --color-m3-on-secondary-container: #EAE6F2;
+
+  --color-m3-tertiary: #FFB4A6;
+  --color-m3-on-tertiary: #5E1500;
+  --color-m3-tertiary-container: #862700;
+  --color-m3-on-tertiary-container: #FFDBCF;
+
+  --color-m3-accent: #B5F0A8;
+  --color-m3-on-accent: #082100;
+
+  --color-m3-error: #FFB4AB;
+  --color-m3-on-error: #690005;
+  --color-m5-error-container: #93000A;
+  --color-m3-on-error-container: #FFDAD6;
+
+  --color-m3-background: #0F0F12;
+  --color-m3-on-background: #E5E1E9;
+  --color-m3-surface: #18181D;
+  --color-m3-surface-dim: #15151A;
+  --color-m3-surface-bright: #34343B;
+  --color-m3-surface-container-lowest: #0F0F12;
+  --color-m3-surface-container-low: #1C1C22;
+  --color-m3-surface-container: #202027;
+  --color-m3-surface-container-high: #2A2A31;
+  --color-m3-surface-container-highest: #35353C;
+  --color-m3-on-surface: #E5E1E9;
+  --color-m3-on-surface-variant: #C9C4D0;
+  --color-m3-outline: #4B4554;
+  --color-m3-outline-variant: #6E6573;
+
+  /* M3 shape scale (expressive varied corner radii) */
+  --radius-m3-xs: 4px;
+  --radius-m3-sm: 8px;
+  --radius-m3-md: 12px;
+  --radius-m3-lg: 16px;
+  --radius-m3-xl: 28px;
+  --radius-m3-2xl: 36px;
+  --radius-m3-full: 9999px;
+
+  /* Motion spring presets for framer-motion variants */
+  --spring-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring-bouncy: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+
+  --font-display: "Roboto Flex", "Inter", system-ui, sans-serif;
+  --font-body: "Roboto Flex", "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --background: #F5EFF7;
+  --foreground: #1B0B45;
+  --card: #FFFFFF;
+  --card-foreground: #1B0B45;
+  --popover: #FFFFFF;
+  --popover-foreground: #1B0B45;
+  --primary: #4B2A8E;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAE6F2;
+  --secondary-foreground: #322E40;
+  --muted: #EAE6F2;
+  --muted-foreground: #4B4554;
+  --accent: #B5F0A8;
+  --accent-foreground: #082100;
+  --destructive: #BA1A1A;
+  --destructive-foreground: #FFFFFF;
+  --border: #CAC4CF;
+  --input: #CAC4CF;
+  --ring: #4B2A8E;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #0F0F12;
+  --foreground: #E5E1E9;
+  --card: #1C1C22;
+  --card-foreground: #E5E1E9;
+  --popover: #1C1C22;
+  --popover-foreground: #E5E1E9;
+  --primary: #D9C2FF;
+  --primary-foreground: #1B0B45;
+  --secondary: #34343B;
+  --secondary-foreground: #E5E1E9;
+  --muted: #34343B;
+  --muted-foreground: #C9C4D0;
+  --accent: #B5F0A8;
+  --accent-foreground: #082100;
+  --destructive: #FFB4AB;
+  --destructive-foreground: #690005;
+  --border: #4B4554;
+  --input: #4B4554;
+  --ring: #D9C2FF;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--m3-background);
+  color: var(--m3-on-background);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Telegram WebApp viewport handling */
+body {
+  --tg-viewport-height: 100vh;
+  min-height: var(--tg-viewport-height);
+}
+
+/* ===== M3 component primitives ===== */
+
+.m3-card {
+  background: var(--m3-surface-container);
+  color: var(--m3-on-surface);
+  border-radius: var(--radius-m3-xl);
+  border: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.02);
+  transition: transform 280ms var(--spring-snappy), box-shadow 280ms var(--spring-snappy), background 220ms ease;
+}
+.m3-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);
+}
+.m3-card-interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.m3-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-m3-full);
+  padding: 0.65rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  transition: transform 180ms var(--spring-soft), background 200ms ease, box-shadow 200ms ease;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+}
+.m3-button:active { transform: scale(0.95); }
+
+.m3-button-filled {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+}
+.m3-button-filled:hover { box-shadow: 0 4px 14px rgba(217,194,255,0.35); }
+
+.m3-button-tonal {
+  background: var(--m3-secondary-container);
+  color: var(--m3-on-secondary-container);
+}
+
+.m3-button-outlined {
+  background: transparent;
+  color: var(--m3-primary);
+  border: 1px solid var(--m3-outline);
+}
+
+.m3-button-text {
+  background: transparent;
+  color: var(--m3-primary);
+  padding: 0.5rem 0.9rem;
+}
+
+.m3-button-danger {
+  background: var(--m3-error);
+  color: var(--m3-on-error);
+}
+
+.m3-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-m3-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--m3-surface-container-high);
+  color: var(--m3-on-surface-variant);
+  border: 1px solid var(--m3-outline-variant);
+  transition: all 200ms var(--spring-snappy);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.m3-chip-active {
+  background: var(--m3-primary);
+  color: var(--m3-on-primary);
+  border-color: transparent;
+}
+
+.m3-input {
+  width: 100%;
+  background: var(--m3-surface-container-high);
+  color: var(--m3-on-surface);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-m3-xs);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.95rem;
+  transition: border-color 180ms ease, background 180ms ease;
+  outline: none;
+}
+.m3-input:focus {
+  border-color: var(--m3-primary);
+  background: var(--m3-surface-container-highest);
+}
+.m3-input::placeholder {
+  color: var(--m3-on-surface-variant);
+  opacity: 0.7;
+}
+
+.m3-thumbnail {
+  border-radius: var(--radius-m3-lg) var(--radius-m3-lg) var(--radius-m3-md) var(--radius-m3-md);
+  overflow: hidden;
+  position: relative;
+  background: var(--m3-surface-container-high);
+}
+
+/* M3 expressive asymmetric corner shape for hero cards */
+.m3-shape-expressive {
+  border-radius: 28px 28px 12px 12px;
+}
+.m3-shape-leaf {
+  border-radius: 28px 4px 28px 28px;
+}
+
+.m3-elevated {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.30),
+    0 2px 6px rgba(0,0,0,0.25),
+    0 6px 18px rgba(0,0,0,0.18);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--m3-outline);
+  border-radius: 9999px;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Safe-area padding for Telegram WebApp bottom nav */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+.safe-top { padding-top: env(safe-area-inset-top, 0); }
+
+/* Custom utility for surface gradient */
+.m3-surface-gradient {
+  background: linear-gradient(160deg,
+    var(--m3-surface-container) 0%,
+    var(--m3-surface-container-high) 100%);
+}
+
+/* Glow ring for active state */
+.m3-ring-glow {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--m3-primary) 25%, transparent);
+}
+
+/* Fade/slide keyframes used by Framer Motion fallback */
+@keyframes m3-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-m3-fade-in {
+  animation: m3-fade-in 320ms var(--spring-snappy) both;
+}

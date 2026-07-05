@@ -1,0 +1,23 @@
+[build]
+  command = "bun run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_RUNTIME = "nodejs"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  # Required for Prisma + libsql adapter to work in Netlify Functions
+  included_files = ["prisma/**/*", "node_modules/@prisma/**/*", "node_modules/@libsql/**/*", "node_modules/@prisma/adapter-libsql/**/*"]
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "ALLOWALL"
+    # Telegram Mini Apps run inside an iframe, so allow framing from Telegram
+    Content-Security-Policy = "frame-ancestors https://*.telegram.org"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"

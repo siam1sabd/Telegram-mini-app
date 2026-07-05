@@ -1,0 +1,142 @@
+// Prisma schema for Telegram Mini App
+// Compatible with both local SQLite (dev) and Turso (production)
+// For Turso deployment, use @libsql/prisma-adapter or Prisma Accelerate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ User & Authentication ============
+
+model User {
+  id              String   @id @default(cuid())
+  telegramId      String   @unique
+  username        String?
+  firstName       String?
+  lastName        String?
+  photoUrl        String?
+  points          Int      @default(0)
+  joinedAt        DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  ageConfirmed    Boolean  @default(false)
+  ageConfirmedAt  DateTime?
+  referralCode    String   @unique
+  referredById    String?  // refers to User.id of referrer
+  referredBy      User?    @relation("Referrals", fields: [referredById], references: [id])
+  referrals       User[]   @relation("Referrals")
+  downloads       DownloadHistory[]
+  adViews         AdView[]
+  bonusGranted    Boolean  @default(false) // first-time 20pt bonus
+
+  @@index([telegramId])
+  @@index([referralCode])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AgeConfirmation {
+  id           String   @id @default(cuid())
+  telegramId   String   @unique
+  confirmedAt  DateTime @default(now())
+}
+
+// ============ Content & Categories ============
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contents    Content[]
+}
+
+model Content {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  thumbnailUrl String?
+  imageUrl     String?
+  metadata     String?  // JSON string for additional metadata
+  downloadUrl  String
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  visibility   Boolean  @default(true)
+  pointCost    Int      @default(4)
+  tags         String?  // comma-separated tags
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  downloads    DownloadHistory[]
+
+  @@index([categoryId])
+  @@index([visibility])
+}
+
+// ============ Downloads & Ads ============
+
+model DownloadHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId    String
+  content      Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  pointsSpent  Int      @default(0)
+  accessMethod String   @default("points") // "points" | "ads"
+  downloadedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([contentId])
+}
+
+model AdView {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId   String?  // nullable - some ad views are for general purposes
+  viewedAt    DateTime @default(now())
+  status      String   @default("completed") // "started" | "completed"
+
+  @@index([userId])
+  @@index([contentId])
+}
+
+model Referral {
+  id           String   @id @default(cuid())
+  referrerId   String   @unique // referrer User.id
+  referredCount Int     @default(0)
+  pointsEarned Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============ Settings ============
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+// Default settings seeded:
+// - joinBonus: 20
+// - referralReward: 30
+// - downloadPointCost: 4
+// - requiredAdCount: 2
+// - adsgramPlacementId: ""
+// - adsgramEnabled: "true"
+// - adminUsername: "admin"
+// - adminPasswordHash: (bcrypt)
