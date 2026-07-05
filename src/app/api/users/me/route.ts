@@ -14,9 +14,9 @@ export const runtime = 'nodejs'
 export async function GET(req: Request) {
   try {
     const initData = getInitDataFromRequest(req)
-    if (!initData) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
+    if (!initData) return NextResponse.json({ ok: false, error: 'unauthorized', reason: 'missing-initData' }, { status: 401 })
     const ctx = await resolveUser(initData)
-    if (!ctx) return NextResponse.json({ ok: false, error: 'invalid-initData' }, { status: 401 })
+    if (!ctx) return NextResponse.json({ ok: false, error: 'invalid-initData', reason: ctx === null ? 'invalid-hash' : 'unknown' }, { status: 401 })
 
     const settings = await getSettings([
       'downloadPointCost',

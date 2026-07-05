@@ -262,11 +262,30 @@ When a NEW user opens the app via this link, the referrer automatically gets 30 
 
 ## 🔒 Security Notes
 
-- **Telegram initData validation**: When `TELEGRAM_BOT_TOKEN` is set, the server validates the HMAC-SHA256 hash of incoming `initData` per [Telegram's spec](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app). When unset (e.g. local dev), the app accepts a synthesized user marked as `dev: true`.
+- **Telegram initData validation** uses a **lenient-by-default** strategy:
+  - If `TELEGRAM_BOT_TOKEN` is unset → user accepted as `dev: true` (sandbox/preview)
+  - If `BOT_TOKEN` is set but `hash` is missing → user accepted as `dev: true` + server warning logged
+  - If `BOT_TOKEN` is set and `hash` is present but invalid → user accepted as `dev: true` + server warning logged
+  - If `hash` is valid → user accepted as a real (non-dev) user
+  - To enforce strict HMAC validation, set `STRICT_AUTH=true` in your env vars
+  - Lenient mode prevents users from being locked out due to env var typos, bot-token mismatches, or third-party Telegram clients (Nagram, Plus, etc.) that don't sign initData correctly
+  - See [Telegram's spec](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app) for the validation algorithm
 - **Admin auth**: First-time login with `ADMIN_USERNAME` / `ADMIN_PASSWORD` env vars creates the admin row with a bcrypt hash. Subsequent logins validate against the hash. The session is a signed HMAC cookie valid for 12 hours.
 - **Download URL protection**: Content `downloadUrl` is **never** returned in public content responses — only via the validated `/api/content/[id]/download` endpoint after points deduction or ad completion.
 - **Re-access**: Once a user has unlocked a content item, they can re-fetch the download URL for free (no re-charge).
 - **Referral abuse prevention**: Self-referrals are blocked, and only NEW users (created via the referral link) trigger the referrer reward.
+- **Guest mode escape hatch**: If Telegram auth fails for any reason, users see a friendly error screen with diagnostics and a "Continue in Guest Mode" button that bypasses auth (creates a synthetic user). This avoids lockouts without requiring redeployment.
+
+### Troubleshooting: "Authentication failed" in Telegram
+
+If users see an "Authentication failed" error when opening the Mini App inside Telegram:
+
+1. **Check `TELEGRAM_BOT_TOKEN`** matches the bot that hosts your Mini App URL in BotFather.
+   - Open @BotFather → `/mybots` → select your bot → "Bot Settings" → "Menu Button" or "Mini App"
+   - The bot token shown there must match your env var
+2. **Use the official Telegram app** — third-party clients like Nagram, Plus, etc. may not properly sign initData.
+3. **Lenient mode is active by default** — even if hash validation fails, users should still get in as `dev: true`. If they don't, check your server logs for the specific reason.
+4. **As a last resort**, users can tap "Continue in Guest Mode" on the error screen to bypass auth.
 
 ---
 

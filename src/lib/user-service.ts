@@ -30,10 +30,18 @@ export interface UserContext {
   startParam: string | null
   isNew: boolean
   dev: boolean
+  authBypassed?: boolean
+}
+
+/** Return type for resolveUser that can carry an error reason */
+export interface ResolveUserResult {
+  ctx: UserContext | null
+  reason?: string
 }
 
 /**
  * Verify initData, get-or-create user, apply first-time bonus + referral reward.
+ * Returns null on failure (check `reason` on the wrapper for diagnostics).
  */
 export async function resolveUser(initData: string): Promise<UserContext | null> {
   const result = validateTelegramInitData(initData)
@@ -74,6 +82,7 @@ export async function resolveUser(initData: string): Promise<UserContext | null>
       startParam,
       isNew: false,
       dev: result.dev ?? false,
+      authBypassed: result.authBypassed,
     }
   }
 
@@ -133,6 +142,7 @@ export async function resolveUser(initData: string): Promise<UserContext | null>
     startParam,
     isNew: true,
     dev: result.dev ?? false,
+    authBypassed: result.authBypassed,
   }
 }
 

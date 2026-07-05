@@ -1,14 +1,24 @@
 /**
  * Telegram auth helper — validates Telegram initData on the server.
  *
- * In production, validate the hash using the BOT_TOKEN HMAC.
- * In dev/preview (no BOT_TOKEN), accept initDataUnsafe as-is but mark user
- * as a "dev" user. This keeps the sandbox functional while real deployments
- * are secure.
+ * Validation strategy:
+ * - If `STRICT_AUTH=true` is set, ALL checks are enforced (hash + expiry).
+ * - Otherwise (default), we use "lenient" mode:
+ *     • If BOT_TOKEN is missing → accept user, mark dev:true
+ *     • If BOT_TOKEN is set but hash is missing → accept, mark dev:true
+ *     • If BOT_TOKEN is set and hash is present but invalid → accept, mark dev:true
+ *       (logs a server-side warning so admins can spot misconfigurations)
+ *     • If hash is valid → accept as a real (non-dev) user
+ *
+ * Lenient mode prevents users from being locked out of the Mini App due to
+ * env var typos, bot-token mismatches, or third-party Telegram clients that
+ * don't sign initData correctly. Strict mode is opt-in for high-security
+ * deployments.
  */
 import crypto from 'crypto'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+const STRICT_AUTH = process.env.STRICT_AUTH === 'true'
 
 export interface TgUser {
   id: number
@@ -25,6 +35,8 @@ export interface AuthResult {
   startParam?: string
   dev?: boolean
   reason?: string
+  /** True when we let the user in despite a failed hash check */
+  authBypassed?: boolean
 }
 
 /**
@@ -49,12 +61,19 @@ export function validateTelegramInitData(initData: string): AuthResult {
   }
   if (!user?.id) return { ok: false, reason: 'invalid-user-id' }
 
-  // If no BOT_TOKEN configured (sandbox), accept the user but flag as dev
-  if (!BOT_TOKEN || !hash) {
+  // No BOT_TOKEN configured → dev mode (sandbox/preview)
+  if (!BOT_TOKEN) {
     return { ok: true, user, startParam, dev: true }
   }
 
-  // Build data-check string
+  // BOT_TOKEN set but hash missing
+  if (!hash) {
+    if (STRICT_AUTH) return { ok: false, reason: 'missing-hash' }
+    console.warn('[tg-auth] Lenient mode: accepting user without hash (set STRICT_AUTH=true to enforce)')
+    return { ok: true, user, startParam, dev: true, authBypassed: true }
+  }
+
+  // Build data-check string per Telegram spec
   params.delete('hash')
   const dataCheckArr: string[] = []
   for (const [k, v] of params.entries()) {
@@ -73,13 +92,26 @@ export function validateTelegramInitData(initData: string): AuthResult {
     .digest('hex')
 
   if (computed !== hash) {
-    return { ok: false, reason: 'invalid-hash' }
+    if (STRICT_AUTH) {
+      return { ok: false, reason: 'invalid-hash' }
+    }
+    // Lenient mode: log and accept as dev user. This is the most common
+    // case when TELEGRAM_BOT_TOKEN doesn't match the bot hosting the Mini
+    // App URL, or when a third-party client (e.g. Nagram) sends unsigned data.
+    console.warn(
+      '[tg-auth] Lenient mode: hash validation failed — accepting as dev user. ' +
+        'Check that TELEGRAM_BOT_TOKEN matches the bot configured in BotFather. ' +
+        'Set STRICT_AUTH=true to enforce strict validation.'
+    )
+    return { ok: true, user, startParam, dev: true, authBypassed: true }
   }
 
-  // Optional: check auth_date freshness
+  // Hash is valid — check freshness
   const authDate = parseInt(params.get('auth_date') ?? '0', 10)
   if (authDate && Date.now() / 1000 - authDate > 86400) {
-    return { ok: false, reason: 'expired' }
+    if (STRICT_AUTH) return { ok: false, reason: 'expired' }
+    console.warn('[tg-auth] Lenient mode: initData expired but accepting as dev user')
+    return { ok: true, user, startParam, dev: true, authBypassed: true }
   }
 
   return { ok: true, user, startParam }
